@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+import {initializeApp} from "firebase/app";
 
-import { getFirestore, collection, where, query, getDocs } from "firebase/firestore";
+import {getFirestore, collection, where, query, getDocs} from "firebase/firestore";
 import MicroModal from 'micromodal';
 
 import "./app.css";
@@ -22,6 +22,8 @@ const app = initializeApp(firebaseConfig);
 const firestore = getFirestore();
 
 const dateIdeasRef = collection(firestore, "date-ideas");
+
+
 
 /**
  * Gets a list of items
@@ -46,7 +48,7 @@ const getRandomBudget = async (budget) => {
     MicroModal.show('date-idea-modal');
 }
 
-document.addEventListener("DOMContentLoaded", async function(event) {
+document.addEventListener("DOMContentLoaded", async function (event) {
 
     MicroModal.init({
         onShow: modal => console.info(`${modal.id} is shown`), // [1]
@@ -65,9 +67,39 @@ document.addEventListener("DOMContentLoaded", async function(event) {
     const buttons = document.getElementsByClassName("date-night-button");
     for (let i = 0; i < buttons.length; i++) {
         buttons.item(i).addEventListener("click", () => {
-             const budgetId = buttons.item(i).dataset.budgetId;
-             getRandomBudget(parseInt(budgetId));
+            const budgetId = buttons.item(i).dataset.budgetId;
+            getRandomBudget(parseInt(budgetId));
         });
     }
-    }
+}
 );
+
+
+var CACHE_NAME = 'date-picker-cache';
+var urlsToCache = [
+    '/',
+    '/app.js',
+];
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').then(function(registration) {
+            // Registration was successful
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, function(err) {
+            // registration failed :(
+            console.log('ServiceWorker registration failed: ', err);
+        });
+    });
+}
+
+self.addEventListener('install', function(event) {
+    // Perform install steps
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(function(cache) {
+                console.log('Opened cache');
+                return cache.addAll(urlsToCache);
+            })
+    );
+});

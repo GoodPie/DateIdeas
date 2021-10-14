@@ -26,6 +26,7 @@ module.exports = {
         new CopyPlugin({
             patterns: [
                 {from: path.resolve(__dirname, "manifest.json"), to: ""},
+                {from: path.resolve(__dirname, "src/sw.js"), to: ""},
                 {from: path.resolve(__dirname, "assets"), to: "assets"}
             ]
         })
