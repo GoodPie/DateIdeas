@@ -1,9 +1,12 @@
 const path = require('path');
 
+
+const isDevelopment = process.env.NODE_ENV === 'development'
+
 module.exports = {
     entry: './src/app.js',
-    mode: "development",
-    devtool: 'inline-source-map',
+    mode: isDevelopment ? "development" : "production",
+    devtool: isDevelopment ? 'inline-source-map' : 'hidden-source-map',
 
     module: {
         rules: [
