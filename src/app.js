@@ -46,11 +46,11 @@ const getRandomBudget = async (budget) => {
 
     document.getElementById("data-idea-content").innerHTML = chosenItem;
     MicroModal.show('date-idea-modal', {
-		  onClose: function(_this, elm, e) {
-				e.preventDefault();
-				e.stopPropagation();
-		  }		
-        );
+	  onClose: function(_this, elm, e) {
+			e.preventDefault();
+			e.stopPropagation();
+	  }		
+    });
 }
 
 document.addEventListener("DOMContentLoaded", async function (event) {
