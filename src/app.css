@@ -64,6 +64,27 @@ div[id^="data-night-option"]:hover {
     transition: background-color 0.4s;
 }
 
+#fab {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    height: 50px;
+    width: 50px;
+    border-radius: 100%;
+    background: #EC7D10;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    cursor: pointer;
+    filter: drop-shadow(0rem 0.35rem 0.2rem rgba(0, 0, 0, 0.2));
+}
+
+#fab:hover {
+    background: #F08F2D;
+}
+
 /**************************\
   Basic Modal Styles
 \**************************/

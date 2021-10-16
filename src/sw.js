@@ -1,5 +1,5 @@
-var CACHE_NAME = 'date-picker-cache';
-var urlsToCache = [
+const CACHE_NAME = 'date-picker-cache';
+const urlsToCache = [
     '/',
     '/app.js',
 ];

@@ -1,7 +1,8 @@
 // Import the functions you need from the SDKs you need
 import {initializeApp} from "firebase/app";
 
-import {getFirestore, collection, where, query, orderBy,  getDocs, limit } from "firebase/firestore";
+import {collection, getDocs, addDoc, doc, getFirestore, query, where} from "firebase/firestore";
+import { GoogleAuthProvider, getAuth, signInWithPopup,onAuthStateChanged } from "firebase/auth";
 import MicroModal from 'micromodal';
 
 import "./app.css";
@@ -19,10 +20,25 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const provider = new GoogleAuthProvider();
 const firestore = getFirestore();
+
+
+onAuthStateChanged(getAuth(), (user) => {
+    if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/firebase.User
+        const uid = user.uid;
+        // ...
+    } else {
+        // User is signed out
+        // ...
+    }
+});
 
 const dateIdeasRef = collection(firestore, "date-ideas");
 
+let cacheInvalidated = false;
 let lastIndex = null; // Use the last index to prevent duplicates one after the other
 const fetchedResults = {
     1: [],
@@ -37,7 +53,7 @@ const fetchedResults = {
  */
 const getRandomBudget = async (budget) => {
 
-    if (fetchedResults[budget].length > 0) {
+    if (fetchedResults[budget].length > 0 && !cacheInvalidated) {
         // We have cached results
         getRandomResultFromCache(budget);
         return;
@@ -53,6 +69,7 @@ const getRandomBudget = async (budget) => {
         fetchedResults[budget].push(doc.data()['idea']);
     });
 
+    cacheInvalidated = false;
     getRandomResultFromCache(budget);
 
 }
@@ -63,6 +80,7 @@ const getRandomBudget = async (budget) => {
  */
 const getRandomResultFromCache = (budget) => {
 
+    // Ensure that we don't immediately repeat an idea
     let randomIndex = Math.floor(Math.random() * fetchedResults[budget].length);
     while(randomIndex === lastIndex && fetchedResults[budget].length > 1) {
         randomIndex = Math.floor(Math.random() * fetchedResults[budget].length);
@@ -70,9 +88,7 @@ const getRandomResultFromCache = (budget) => {
     }
 
     lastIndex = randomIndex;
-    const chosenIdea = fetchedResults[budget][randomIndex];
-
-    document.getElementById("data-idea-content").innerHTML = chosenIdea;
+    document.getElementById("data-idea-content").innerHTML = fetchedResults[budget][randomIndex];
     MicroModal.show('date-idea-modal', {
         onClose: function(_this, elm, e) {
             e.preventDefault();
@@ -82,6 +98,51 @@ const getRandomResultFromCache = (budget) => {
     });
 }
 
+/**
+ * Logs the user in with Google
+ */
+const loginWithGoogle = (callback) => {
+    const auth = getAuth();
+    signInWithPopup(auth, provider)
+        .then((result) => {
+
+            // This gives you a Google Access Token. You can use it to access the Google API.
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            const token = credential.accessToken;
+
+            // The signed-in user info.
+            const user = result.user;
+            if (user !== null) callback();
+
+        }).catch((error) => {
+            console.error(error);
+        });
+}
+
+/**
+ * Checks if the user is signed in already
+ * @returns {boolean}
+ */
+const isUserSignedIn = () => {
+    const auth = getAuth();
+    return auth.currentUser !== null;
+}
+
+const showAddDateIdea = () => {
+    MicroModal.show('date-idea-add-modal', {
+        onClose: function(_this, elm, e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+        }
+    });
+}
+
+/**
+ * Initialize the document
+ */
 document.addEventListener("DOMContentLoaded", async function (event) {
 
     MicroModal.init({
@@ -102,36 +163,33 @@ document.addEventListener("DOMContentLoaded", async function (event) {
             getRandomBudget(parseInt(budgetId));
         });
     }
-}
-);
 
+    document.getElementById("fab").addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isUserSignedIn()) {
+            loginWithGoogle(showAddDateIdea);
+        } else {
+            showAddDateIdea();
+        }
 
-// Service worker initialization
-const CACHE_NAME = 'date-picker-cache';
-const urlsToCache = [
-    '/',
-    '/app.js',
-];
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/sw.js').then(function(registration) {
-            // Registration was successful
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        }, function(err) {
-            // registration failed :(
-            console.log('ServiceWorker registration failed: ', err);
-        });
     });
-}
 
-self.addEventListener('install', function(event) {
-    // Perform install steps
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(function(cache) {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
-    );
+    document.getElementById("add-date-idea").addEventListener("click",  async () => {
+        if (!isUserSignedIn()) return;
+
+        const idea = document.getElementById("idea").value;
+        const budget = document.getElementById("budget").value;
+
+        await addDoc(collection(firestore, "date-ideas"), {
+            idea: idea,
+            budget: parseInt(budget)
+        });
+
+        document.getElementById("idea").value = "";
+        cacheInvalidated = true;
+        MicroModal.close("date-idea-add-modal")
+    })
 });
+
+
