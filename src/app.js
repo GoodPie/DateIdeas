@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import {initializeApp} from "firebase/app";
 
-import {getFirestore, collection, where, query, getDocs} from "firebase/firestore";
+import {getFirestore, collection, where, query, orderBy,  getDocs, limit } from "firebase/firestore";
 import MicroModal from 'micromodal';
 
 import "./app.css";
@@ -23,7 +23,12 @@ const firestore = getFirestore();
 
 const dateIdeasRef = collection(firestore, "date-ideas");
 
-
+let lastIndex = null; // Use the last index to prevent duplicates one after the other
+const fetchedResults = {
+    1: [],
+    2: [],
+    3: [],
+}
 
 /**
  * Gets a list of items
@@ -31,25 +36,49 @@ const dateIdeasRef = collection(firestore, "date-ideas");
  * @returns {Promise<void>}
  */
 const getRandomBudget = async (budget) => {
+
+    if (fetchedResults[budget].length > 0) {
+        // We have cached results
+        getRandomResultFromCache(budget);
+        return;
+    }
+
+    // Only really want to query once to reduce the read count
+    // As the list is relatively small, reading all entries once isn't that expensive
+    // and as there's no nice way to fetch a random index, this is the way that makes most sense to me
     const q = query(dateIdeasRef, where("budget", "==", budget));
     const querySnapshot = await getDocs(q);
-    const itemCount = querySnapshot.size;
-    const itemIndex = Math.floor(Math.random() * itemCount);
 
-    let chosenItem = null;
-    let count = 0;
     querySnapshot.forEach((doc) => {
-
-        if (itemIndex === count) chosenItem = doc.data()['idea'];
-        count += 1;
+        fetchedResults[budget].push(doc.data()['idea']);
     });
 
-    document.getElementById("data-idea-content").innerHTML = chosenItem;
+    getRandomResultFromCache(budget);
+
+}
+
+/**
+ * Fetches and displays the random date idea, depending on budget, from the cached firebase results
+ * @param {number} budget Index to fetch the cached results
+ */
+const getRandomResultFromCache = (budget) => {
+
+    let randomIndex = Math.floor(Math.random() * fetchedResults[budget].length);
+    while(randomIndex === lastIndex && fetchedResults[budget].length > 1) {
+        randomIndex = Math.floor(Math.random() * fetchedResults[budget].length);
+        console.log(randomIndex);
+    }
+
+    lastIndex = randomIndex;
+    const chosenIdea = fetchedResults[budget][randomIndex];
+
+    document.getElementById("data-idea-content").innerHTML = chosenIdea;
     MicroModal.show('date-idea-modal', {
-	  onClose: function(_this, elm, e) {
-			e.preventDefault();
-			e.stopPropagation();
-	  }		
+        onClose: function(_this, elm, e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
     });
 }
 
@@ -66,7 +95,6 @@ document.addEventListener("DOMContentLoaded", async function (event) {
         debugMode: false // [10]
     });
 
-
     const buttons = document.getElementsByClassName("date-night-button");
     for (let i = 0; i < buttons.length; i++) {
         buttons.item(i).addEventListener("click", () => {
@@ -78,8 +106,9 @@ document.addEventListener("DOMContentLoaded", async function (event) {
 );
 
 
-var CACHE_NAME = 'date-picker-cache';
-var urlsToCache = [
+// Service worker initialization
+const CACHE_NAME = 'date-picker-cache';
+const urlsToCache = [
     '/',
     '/app.js',
 ];
