@@ -2,7 +2,6 @@ const path = require('path');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 
-
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 module.exports = {
@@ -11,12 +10,10 @@ module.exports = {
     devtool: isDevelopment ? 'inline-source-map' : 'hidden-source-map',
 
     module: {
-        rules: [
-            {
-                test: /\.css$/i,
-                use: ["style-loader", "css-loader"],
-            },
-        ],
+        rules: [{
+            test: /\.css$/i,
+            use: ["style-loader", "css-loader"],
+        }, ],
     },
 
     plugins: [
@@ -25,9 +22,9 @@ module.exports = {
         }),
         new CopyPlugin({
             patterns: [
-                {from: path.resolve(__dirname, "manifest.json"), to: ""},
-                {from: path.resolve(__dirname, "src/sw.js"), to: ""},
-                {from: path.resolve(__dirname, "assets"), to: "assets"}
+                { from: path.resolve(__dirname, "manifest.json"), to: "" },
+                { from: path.resolve(__dirname, "src/sw.js"), to: "" },
+                { from: path.resolve(__dirname, "assets"), to: "assets" }
             ]
         })
     ],

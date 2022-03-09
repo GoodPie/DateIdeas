@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
-import {initializeApp} from "firebase/app";
+import { initializeApp } from "firebase/app";
 
-import {collection, getDocs, addDoc, doc, getFirestore, query, where} from "firebase/firestore";
-import { GoogleAuthProvider, getAuth, signInWithPopup,onAuthStateChanged } from "firebase/auth";
+import { collection, getDocs, addDoc, doc, getFirestore, query, where } from "firebase/firestore";
+import { GoogleAuthProvider, getAuth, signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import MicroModal from 'micromodal';
 
 import "./app.css";
@@ -22,7 +22,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const provider = new GoogleAuthProvider();
 const firestore = getFirestore();
-
 
 onAuthStateChanged(getAuth(), (user) => {
     if (user) {
@@ -51,7 +50,7 @@ const fetchedResults = {
  * @param {number} budget Budget ID (1 - 3, 1 being the lowest)
  * @returns {Promise<void>}
  */
-const getRandomBudget = async (budget) => {
+const getRandomBudget = async(budget) => {
 
     if (fetchedResults[budget].length > 0 && !cacheInvalidated) {
         // We have cached results
@@ -82,7 +81,7 @@ const getRandomResultFromCache = (budget) => {
 
     // Ensure that we don't immediately repeat an idea
     let randomIndex = Math.floor(Math.random() * fetchedResults[budget].length);
-    while(randomIndex === lastIndex && fetchedResults[budget].length > 1) {
+    while (randomIndex === lastIndex && fetchedResults[budget].length > 1) {
         randomIndex = Math.floor(Math.random() * fetchedResults[budget].length);
         console.log(randomIndex);
     }
@@ -143,7 +142,7 @@ const showAddDateIdea = () => {
 /**
  * Initialize the document
  */
-document.addEventListener("DOMContentLoaded", async function (event) {
+document.addEventListener("DOMContentLoaded", async function(event) {
 
     MicroModal.init({
         openTrigger: 'data-custom-open', // [3]
@@ -175,7 +174,7 @@ document.addEventListener("DOMContentLoaded", async function (event) {
 
     });
 
-    document.getElementById("add-date-idea").addEventListener("click",  async () => {
+    document.getElementById("add-date-idea").addEventListener("click", async() => {
         if (!isUserSignedIn()) return;
 
         const idea = document.getElementById("idea").value;
@@ -191,5 +190,3 @@ document.addEventListener("DOMContentLoaded", async function (event) {
         MicroModal.close("date-idea-add-modal")
     })
 });
-
-
